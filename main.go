@@ -6,7 +6,11 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
+	"os"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -31,10 +35,19 @@ func main() {
 	ratio := make([]Ratio, 256)
 	const size = 8 * 1024
 	for rule := range 256 {
+		img := image.NewGray(image.Rect(0, 0, size, size/2))
 		points := make(plotter.XYs, 0, 8)
 		grid := make([]byte, size)
 		grid[size/2] = 1
 		for iteration := range size / 2 {
+			for key, value := range grid {
+				if value > 0 {
+					value = 0
+				} else {
+					value = 255
+				}
+				img.SetGray(key, iteration, color.Gray{Y: byte(value)})
+			}
 			next := make([]byte, len(grid))
 			for cell := 1; cell < len(grid)-1; cell++ {
 				state := grid[cell-1]*4 + grid[cell]*2 + grid[cell+1]*1
@@ -54,6 +67,17 @@ func main() {
 				r = float64(zero) / float64(one)
 			}
 			points = append(points, plotter.XY{X: float64(iteration), Y: r})
+		}
+
+		output, err := os.Create(fmt.Sprintf("plots/ca%d.png", rule))
+		if err != nil {
+			panic(err)
+		}
+		defer output.Close()
+
+		err = png.Encode(output, img)
+		if err != nil {
+			panic(err)
 		}
 
 		p := plot.New()
