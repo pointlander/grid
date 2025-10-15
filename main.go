@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/color"
@@ -12,10 +13,11 @@ import (
 	"math"
 	"os"
 
-	"gonum.org/v1/plot"
-	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/vg"
-	"gonum.org/v1/plot/vg/draw"
+	//"gonum.org/v1/plot"
+	//"gonum.org/v1/plot/plotter"
+	//"gonum.org/v1/plot/vg"
+	//"gonum.org/v1/plot/vg/draw"
+	"github.com/pointlander/compress"
 )
 
 func AreRatiosEqual(a, b, c, d int) bool {
@@ -36,7 +38,7 @@ func main() {
 	const size = 8 * 1024
 	for rule := range 256 {
 		img := image.NewGray(image.Rect(0, 0, size, size/2))
-		points := make(plotter.XYs, 0, 8)
+		//points := make(plotter.XYs, 0, 8)
 		grid := make([]byte, size)
 		grid[size/2] = 1
 		for iteration := range size / 2 {
@@ -54,7 +56,7 @@ func main() {
 				next[cell] = byte((rule >> state) & 1)
 			}
 			grid = next
-			one, zero := 0, 0
+			/*one, zero := 0, 0
 			for _, value := range grid {
 				if value == 0 {
 					zero++
@@ -66,7 +68,7 @@ func main() {
 			if one != 0 {
 				r = float64(zero) / float64(one)
 			}
-			points = append(points, plotter.XY{X: float64(iteration), Y: r})
+			points = append(points, plotter.XY{X: float64(iteration), Y: r})*/
 		}
 
 		output, err := os.Create(fmt.Sprintf("plots/ca%d.png", rule))
@@ -80,7 +82,7 @@ func main() {
 			panic(err)
 		}
 
-		p := plot.New()
+		/*p := plot.New()
 
 		p.Title.Text = "iteration vs ratio"
 		p.X.Label.Text = "iteration"
@@ -106,7 +108,11 @@ func main() {
 			} else {
 				one++
 			}
-		}
+		}*/
+		var buffer bytes.Buffer
+		compress.Mark1Compress16(grid, &buffer)
+		zero := buffer.Len()
+		one := size
 		ratio[rule] = Ratio{
 			Ratio: float64(zero) / float64(one),
 			One:   one,
