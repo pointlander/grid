@@ -153,7 +153,7 @@ func main() {
 	}
 
 	const size = 8
-	const space = (1 << size) - 1
+	const space = (1 << size)
 	rule := 110
 	rng := rand.New(rand.NewSource(1))
 	_ = rng
