@@ -161,9 +161,13 @@ func main() {
 		target[i+1] = bit
 		t |= bit << i
 	}
-	for range 4 {
-		fmt.Printf("target %v\n", target)
-		next := [][]byte{}
+	max, maxGrid := 0, []byte{}
+	var process func(depth int, target []byte)
+	process = func(depth int, target []byte) {
+		if depth > max {
+			max, maxGrid = depth, target
+		}
+		fmt.Printf("%d target %v\n", depth, target)
 		for guess := range 256 {
 			g := make([]byte, 8+2)
 			for i := range 8 {
@@ -182,13 +186,21 @@ func main() {
 				}
 			}
 			if equals {
-				fmt.Printf("%v\n", g)
-				next = append(next, g)
+				fmt.Printf("%d %v\n", depth, g)
+				process(depth+1, g)
 			}
 		}
-		if len(next) == 0 {
-			break
-		}
-		target = next[0]
 	}
+	process(0, target)
+	fmt.Println(max, maxGrid)
+	grid := maxGrid
+	for range max {
+		next := make([]byte, len(grid))
+		for cell := 1; cell < len(grid)-1; cell++ {
+			state := grid[cell-1]*4 + grid[cell]*2 + grid[cell+1]*1
+			next[cell] = byte((rule >> state) & 1)
+		}
+		grid = next
+	}
+	fmt.Println(grid)
 }
