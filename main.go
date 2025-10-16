@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -27,7 +28,13 @@ func AreRatiosEqual(a, b, c, d int) bool {
 	return a*d == b*c
 }
 
-func main() {
+var (
+	// FlagGenerate generate cas
+	FlagGenerate = flag.Bool("generate", false, "generate cas")
+)
+
+// Generate generate cas
+func Generate() {
 	type Ratio struct {
 		Ratio float64
 		One   int
@@ -133,5 +140,14 @@ func main() {
 				fmt.Println(" ", key, value)
 			}
 		}
+	}
+}
+
+func main() {
+	flag.Parse()
+
+	if *FlagGenerate {
+		Generate()
+		return
 	}
 }
