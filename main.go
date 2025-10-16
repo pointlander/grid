@@ -161,26 +161,34 @@ func main() {
 		target[i+1] = bit
 		t |= bit << i
 	}
-	fmt.Printf("target %d: %b\n", t, t)
-	for guess := range 256 {
-		g := make([]byte, 8+2)
-		for i := range 8 {
-			g[i+1] = byte((guess >> i) & 1)
-		}
-		infer := make([]byte, 8+2)
-		for cell := 1; cell < len(g)-1; cell++ {
-			state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
-			infer[cell] = byte((rule >> state) & 1)
-		}
-		equals := true
-		for key, value := range target {
-			if value != infer[key] {
-				equals = false
-				break
+	for range 4 {
+		fmt.Printf("target %v\n", target)
+		next := [][]byte{}
+		for guess := range 256 {
+			g := make([]byte, 8+2)
+			for i := range 8 {
+				g[i+1] = byte((guess >> i) & 1)
+			}
+			infer := make([]byte, 8+2)
+			for cell := 1; cell < len(g)-1; cell++ {
+				state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
+				infer[cell] = byte((rule >> state) & 1)
+			}
+			equals := true
+			for key, value := range target {
+				if value != infer[key] {
+					equals = false
+					break
+				}
+			}
+			if equals {
+				fmt.Printf("%v\n", g)
+				next = append(next, g)
 			}
 		}
-		if equals {
-			fmt.Printf("%d: %b\n", guess, guess)
+		if len(next) == 0 {
+			break
 		}
+		target = next[0]
 	}
 }
