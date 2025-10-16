@@ -152,55 +152,73 @@ func main() {
 		return
 	}
 
+	const size = 8
 	rule := 110
 	rng := rand.New(rand.NewSource(1))
-	target := make([]byte, 8+2)
-	t := byte(0)
-	for i := range 8 {
-		bit := byte(rng.Intn(2))
-		target[i+1] = bit
-		t |= bit << i
-	}
-	max, maxGrid := 0, []byte{}
-	var process func(depth int, target []byte)
-	process = func(depth int, target []byte) {
-		if depth > max {
-			max, maxGrid = depth, target
+	_ = rng
+	count := 0
+	for b := range 256 {
+		target := make([]byte, size+2)
+		t := byte(0)
+		for i := range size {
+			bit := byte((b >> i) & 1 /*rng.Intn(2)*/)
+			target[i+1] = bit
+			t |= bit << i
 		}
-		fmt.Printf("%d target %v\n", depth, target)
-		for guess := range 256 {
-			g := make([]byte, 8+2)
-			for i := range 8 {
-				g[i+1] = byte((guess >> i) & 1)
+		max, maxGrid := 0, []byte{}
+		seen := make(map[uint64]bool)
+		var process func(depth int, target []byte)
+		process = func(depth int, target []byte) {
+			if depth > max {
+				max, maxGrid = depth, target
 			}
-			infer := make([]byte, 8+2)
-			for cell := 1; cell < len(g)-1; cell++ {
-				state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
-				infer[cell] = byte((rule >> state) & 1)
-			}
-			equals := true
-			for key, value := range target {
-				if value != infer[key] {
-					equals = false
-					break
+			fmt.Printf("%d target %v\n", depth, target)
+			for guess := range (1 << size) - 1 {
+				g := make([]byte, size+2)
+				for i := range size {
+					g[i+1] = byte((guess >> i) & 1)
+				}
+				infer := make([]byte, size+2)
+				for cell := 1; cell < len(g)-1; cell++ {
+					state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
+					infer[cell] = byte((rule >> state) & 1)
+				}
+				equals, zero := true, true
+				for _, value := range target {
+					if value != 0 {
+						zero = false
+					}
+				}
+				for key, value := range target {
+					if value != infer[key] {
+						equals = false
+						break
+					}
+				}
+				if equals && !zero {
+					if !seen[uint64(guess)] {
+						seen[uint64(guess)] = true
+						fmt.Printf("%d %v\n", depth, g)
+						process(depth+1, g)
+					}
 				}
 			}
-			if equals {
-				fmt.Printf("%d %v\n", depth, g)
-				process(depth+1, g)
+		}
+		process(0, target)
+		fmt.Println(max, maxGrid)
+		grid := maxGrid
+		for range max {
+			next := make([]byte, len(grid))
+			for cell := 1; cell < len(grid)-1; cell++ {
+				state := grid[cell-1]*4 + grid[cell]*2 + grid[cell+1]*1
+				next[cell] = byte((rule >> state) & 1)
 			}
+			grid = next
+		}
+		fmt.Println(grid)
+		if max > 0 {
+			count++
 		}
 	}
-	process(0, target)
-	fmt.Println(max, maxGrid)
-	grid := maxGrid
-	for range max {
-		next := make([]byte, len(grid))
-		for cell := 1; cell < len(grid)-1; cell++ {
-			state := grid[cell-1]*4 + grid[cell]*2 + grid[cell+1]*1
-			next[cell] = byte((rule >> state) & 1)
-		}
-		grid = next
-	}
-	fmt.Println(grid)
+	fmt.Println(count)
 }
