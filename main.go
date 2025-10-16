@@ -153,11 +153,12 @@ func main() {
 	}
 
 	const size = 8
+	const space = (1 << size) - 1
 	rule := 110
 	rng := rand.New(rand.NewSource(1))
 	_ = rng
 	count := 0
-	for b := range 256 {
+	for b := range space {
 		target := make([]byte, size+2)
 		t := byte(0)
 		for i := range size {
@@ -173,7 +174,7 @@ func main() {
 				max, maxGrid = depth, target
 			}
 			fmt.Printf("%d target %v\n", depth, target)
-			for guess := range (1 << size) - 1 {
+			for guess := range space {
 				g := make([]byte, size+2)
 				for i := range size {
 					g[i+1] = byte((guess >> i) & 1)
