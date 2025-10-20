@@ -157,82 +157,111 @@ func main() {
 	//rule := 30
 	rng := rand.New(rand.NewSource(1))
 	_ = rng
-	count := 0
+	graphs := make([]map[byte]map[byte]uint64, 256)
+	set := make([]map[byte]uint64, 256)
 	for b := range space {
-	search:
-		for _, rule := range []int{30, 110, 112} {
-			for s := range 2 {
-				target := make([]byte, size+2)
-				t := byte(0)
-				for i := range size {
-					bit := byte((b >> i) & 1 /*rng.Intn(2)*/)
-					if s == 1 {
-						if bit == 1 {
-							bit = 0
-						} else {
-							bit = 1
+		for rule := range 256 {
+			target := make([]byte, size+2)
+			t := byte(0)
+			for i := range size {
+				bit := byte((b >> i) & 1 /*rng.Intn(2)*/)
+				target[i+1] = bit
+				t |= bit << i
+			}
+			seen := make(map[uint64]bool)
+			var process func(depth int, target []byte, gg byte)
+			process = func(depth int, target []byte, gg byte) {
+				for guess := range space {
+					g := make([]byte, size+2)
+					for i := range size {
+						g[i+1] = byte((guess >> i) & 1)
+					}
+					infer := make([]byte, size+2)
+					for cell := 1; cell < len(g)-1; cell++ {
+						state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
+						infer[cell] = byte((rule >> state) & 1)
+					}
+					equals, zero := true, true
+					for _, value := range target {
+						if value != 0 {
+							zero = false
 						}
 					}
-					target[i+1] = bit
-					t |= bit << i
-				}
-				max, maxGrid := 0, []byte{}
-				seen := make(map[uint64]bool)
-				var process func(depth int, target []byte)
-				process = func(depth int, target []byte) {
-					if depth > max {
-						max, maxGrid = depth, target
+					for key, value := range target {
+						if value != infer[key] {
+							equals = false
+							break
+						}
 					}
-					fmt.Printf("%d target %v\n", depth, target)
-					for guess := range space {
-						g := make([]byte, size+2)
-						for i := range size {
-							g[i+1] = byte((guess >> i) & 1)
-						}
-						infer := make([]byte, size+2)
-						for cell := 1; cell < len(g)-1; cell++ {
-							state := g[cell-1]*4 + g[cell]*2 + g[cell+1]*1
-							infer[cell] = byte((rule >> state) & 1)
-						}
-						equals, zero := true, true
-						for _, value := range target {
-							if value != 0 {
-								zero = false
+					if equals && !zero {
+						if !seen[uint64(guess)] {
+							seen[uint64(guess)] = true
+							process(depth+1, g, byte(guess))
+							a := graphs[rule]
+							if a == nil {
+								a = make(map[byte]map[byte]uint64)
 							}
-						}
-						for key, value := range target {
-							if value != infer[key] {
-								equals = false
-								break
+							b := a[gg]
+							if b == nil {
+								b = make(map[byte]uint64)
 							}
-						}
-						if equals && !zero {
-							if !seen[uint64(guess)] {
-								seen[uint64(guess)] = true
-								fmt.Printf("%d %v\n", depth, g)
-								process(depth+1, g)
+							b[byte(guess)]++
+							a[gg] = b
+							graphs[rule] = a
+
+							s := set[rule]
+							if s == nil {
+								s = make(map[byte]uint64)
 							}
+							s[byte(guess)]++
+							set[rule] = s
 						}
 					}
-				}
-				process(0, target)
-				fmt.Println(max, maxGrid)
-				grid := maxGrid
-				for range max {
-					next := make([]byte, len(grid))
-					for cell := 1; cell < len(grid)-1; cell++ {
-						state := grid[cell-1]*4 + grid[cell]*2 + grid[cell+1]*1
-						next[cell] = byte((rule >> state) & 1)
-					}
-					grid = next
-				}
-				fmt.Println(grid)
-				if max > 0 {
-					count++
-					break search
 				}
 			}
+			process(0, target, byte(b))
 		}
 	}
-	fmt.Println(count)
+	for i := range graphs {
+	search:
+		for ii := range graphs {
+			if i == ii {
+				continue
+			}
+			for keya := range graphs[i] {
+				if i == 110 && ii == ^110 {
+					fmt.Println(keya)
+				}
+				valuea := graphs[ii][keya]
+				if valuea == nil {
+					continue search
+				}
+				for keyb := range graphs[i][keya] {
+					valueb := valuea[keyb]
+					if i == 110 && ii == ^110 {
+						fmt.Println(valueb)
+					}
+					if valueb == 0 {
+						continue search
+					}
+				}
+			}
+			fmt.Println(i, ii)
+		}
+	}
+
+	for i := range set {
+	search2:
+		for ii := range set {
+			if i == ii {
+				continue
+			}
+			for keya := range set[i] {
+				if set[ii][keya] == 0 {
+					continue search2
+				}
+			}
+			fmt.Println(i, ii)
+		}
+	}
 }
