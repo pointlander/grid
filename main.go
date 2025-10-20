@@ -194,27 +194,28 @@ func main() {
 						}
 					}
 					if equals && !zero {
+						a := graphs[rule]
+						if a == nil {
+							a = make(map[byte]map[byte]uint64)
+						}
+						b := a[gg]
+						if b == nil {
+							b = make(map[byte]uint64)
+						}
+						b[byte(guess)]++
+						a[gg] = b
+						graphs[rule] = a
+
+						s := set[rule]
+						if s == nil {
+							s = make(map[byte]uint64)
+						}
+						s[byte(guess)]++
+						set[rule] = s
+
 						if !seen[uint64(guess)] {
 							seen[uint64(guess)] = true
 							process(depth+1, g, byte(guess))
-							a := graphs[rule]
-							if a == nil {
-								a = make(map[byte]map[byte]uint64)
-							}
-							b := a[gg]
-							if b == nil {
-								b = make(map[byte]uint64)
-							}
-							b[byte(guess)]++
-							a[gg] = b
-							graphs[rule] = a
-
-							s := set[rule]
-							if s == nil {
-								s = make(map[byte]uint64)
-							}
-							s[byte(guess)]++
-							set[rule] = s
 						}
 					}
 				}
@@ -229,18 +230,12 @@ func main() {
 				continue
 			}
 			for keya := range graphs[i] {
-				if i == 110 && ii == ^110 {
-					fmt.Println(keya)
-				}
 				valuea := graphs[ii][keya]
 				if valuea == nil {
 					continue search
 				}
 				for keyb := range graphs[i][keya] {
 					valueb := valuea[keyb]
-					if i == 110 && ii == ^110 {
-						fmt.Println(valueb)
-					}
 					if valueb == 0 {
 						continue search
 					}
@@ -249,7 +244,7 @@ func main() {
 			fmt.Println(i, ii)
 		}
 	}
-
+	fmt.Println("----------------------------------------------------------")
 	for i := range set {
 	search2:
 		for ii := range set {
