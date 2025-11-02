@@ -152,6 +152,15 @@ func main() {
 		return
 	}
 
+	sum := complex128(1)
+	pow := 1i
+	for k := range 1024 {
+		sum += pow / (2*complex(float64(k+1), 0) + 1)
+		pow *= 1i
+		fmt.Println(sum)
+	}
+	fmt.Println(sum)
+
 	const size = 8
 	const space = (1 << size)
 	//rule := 30
